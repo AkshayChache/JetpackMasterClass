@@ -128,7 +128,7 @@ fun Calculator(modifier: Modifier) {
                readOnly = true,
                textStyle = androidx.compose.ui.text.TextStyle(
                    textAlign = TextAlign.End,
-                   fontSize = 22.sp
+                   fontSize = 28.sp
                )
            )
              Spacer(Modifier.fillMaxWidth().height(10.dp))
