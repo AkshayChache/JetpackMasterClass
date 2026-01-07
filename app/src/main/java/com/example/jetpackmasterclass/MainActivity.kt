@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -59,6 +60,8 @@ import org.intellij.lang.annotations.JdkConstants
 import java.time.format.TextStyle
 
 class MainActivity : ComponentActivity() {
+
+    private val viewModel: CalculatorViewModel by viewModels()
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,8 +77,7 @@ class MainActivity : ComponentActivity() {
                             onActionClick = {  }
                         )
                     } ) { innerPadding ->
-
-                    Calculator(modifier = Modifier.padding(innerPadding))
+                    Calculator(modifier = Modifier.padding(innerPadding),viewModel)
                 }
             }
         }
@@ -84,41 +86,8 @@ class MainActivity : ComponentActivity() {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun Calculator(modifier: Modifier) {
-    var display: String by remember { mutableStateOf("") }
-
-    fun onNumberClick(): Triple<String,String,String>? {
-        val operatorRegex = Regex("[+\\-x/]")
-        val match = operatorRegex.find(display) ?: return null
-
-        val operands = display.split(operatorRegex)
-        Log.d("operand1" , operands.get(0))
-        Log.d("operator" , match.value)
-        Log.d("operand2" , operands.get(1))
-        if (operands.size != 2) return null
-
-
-
-        return Triple(operands[0],match.value,operands[1])
-    }
-    fun calculateResult(){
-       val result = onNumberClick()
-        var op1: Double? = null
-        var op2: Double? = null
-        var output: Double? = null
-        result?.let { (opr1,operator,opr2) ->
-            op1 = opr1.toDouble()
-            op2 = opr2.toDouble()
-            when (operator){
-               "+" -> output =op1 + op2
-                "-" -> output =op1 - op2
-                "x" -> output =op1 * op2
-                "/" -> output =op1 / op2
-            }
-        }
-        display = display.plus("=").plus(output)
-    }
-
+fun Calculator(modifier: Modifier,viewModel: CalculatorViewModel) {
+    var display = viewModel.display
     Box(modifier = modifier.fillMaxSize().background(Color.White)) {
         Column {
            OutlinedTextField(value = display, onValueChange = {},
@@ -133,18 +102,18 @@ fun Calculator(modifier: Modifier) {
            )
              Spacer(Modifier.fillMaxWidth().height(10.dp))
              CreateRow(listOf("9","8","7","/"),
-                 onUpdate = { it-> display = display.plus(it)})
+                 onUpdate = { it-> viewModel.onInput(it)})
              CreateRow(listOf("6","5","4","x"),
-                 onUpdate = {it -> display= display.plus(it)})
+                 onUpdate = {it -> viewModel.onInput(it)})
              CreateRow(listOf("3","2","1","+"),
-                 onUpdate = {it -> display = display.plus(it)})
+                 onUpdate = {it -> viewModel.onInput(it)})
             CreateRow(
                 listOf("C", "0", ".", "="),
                 onUpdate = { it ->
                     when (it) {
-                        "=" -> calculateResult()
-                        "C" -> display = ""
-                        else -> display = display.plus(it)
+                        "=" -> viewModel.onEquals()
+                        "C" -> viewModel.onClear()
+                        else -> viewModel.onInput(it)
                     }
                 })
             }
@@ -163,17 +132,6 @@ fun CreateRow(list: List<String>,onUpdate:(String) -> Unit){
                 }
             }
         }
-}
-
-
-
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -204,21 +162,4 @@ fun AppTopBar(
             }
         }
     )
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    JetpackMasterClassTheme {
-        Greeting("Android")
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun CalculatorPreview() {
-    JetpackMasterClassTheme {
-        Calculator(modifier = Modifier.padding(50.dp))
-    }
 }
